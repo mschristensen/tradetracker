@@ -27,7 +27,13 @@ var (
 
 	tradeCmd = &cobra.Command{
 		Use:   "trade",
-		Short: "Trade generate random trades and adds them to the database.",
+		Short: "Generates trade data.",
+		RunE:  runCmd,
+	}
+
+	positionCmd = &cobra.Command{
+		Use:   "position",
+		Short: "Generates positions from trade data.",
 		RunE:  runCmd,
 	}
 )
@@ -38,6 +44,14 @@ func newApp(_ context.Context, cmd *cobra.Command, args []string) (apps.App, []s
 	switch cmd.Name() {
 	case "trade":
 		app, err = apps.NewTradeApp(
+			cfg.DBFromEnv(),
+		)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "new trade app failed")
+		}
+		return app, args, nil
+	case "position":
+		app, err = apps.NewPositionApp(
 			cfg.DBFromEnv(),
 		)
 		if err != nil {
@@ -116,6 +130,7 @@ func init() {
 
 	rootCmd.AddCommand(
 		tradeCmd,
+		positionCmd,
 	)
 }
 

@@ -33,6 +33,43 @@ CREATE TABLE public.migrations (
 ALTER TABLE public.migrations OWNER TO tradetracker;
 
 --
+-- Name: positions; Type: TABLE; Schema: public; Owner: tradetracker
+--
+
+CREATE TABLE public.positions (
+    id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    instrument_id bigint NOT NULL,
+    size bigint NOT NULL,
+    "timestamp" timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.positions OWNER TO tradetracker;
+
+--
+-- Name: positions_id_seq; Type: SEQUENCE; Schema: public; Owner: tradetracker
+--
+
+CREATE SEQUENCE public.positions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.positions_id_seq OWNER TO tradetracker;
+
+--
+-- Name: positions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tradetracker
+--
+
+ALTER SEQUENCE public.positions_id_seq OWNED BY public.positions.id;
+
+
+--
 -- Name: trades; Type: TABLE; Schema: public; Owner: tradetracker
 --
 
@@ -71,6 +108,13 @@ ALTER SEQUENCE public.trades_id_seq OWNED BY public.trades.id;
 
 
 --
+-- Name: positions id; Type: DEFAULT; Schema: public; Owner: tradetracker
+--
+
+ALTER TABLE ONLY public.positions ALTER COLUMN id SET DEFAULT nextval('public.positions_id_seq'::regclass);
+
+
+--
 -- Name: trades id; Type: DEFAULT; Schema: public; Owner: tradetracker
 --
 
@@ -83,6 +127,14 @@ ALTER TABLE ONLY public.trades ALTER COLUMN id SET DEFAULT nextval('public.trade
 
 ALTER TABLE ONLY public.migrations
     ADD CONSTRAINT migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: positions positions_pkey; Type: CONSTRAINT; Schema: public; Owner: tradetracker
+--
+
+ALTER TABLE ONLY public.positions
+    ADD CONSTRAINT positions_pkey PRIMARY KEY (id);
 
 
 --

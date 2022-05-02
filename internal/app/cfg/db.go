@@ -73,3 +73,13 @@ func (cfg DBCfg) ApplyTradeApp(app *apps.TradeApp) error {
 	app.DB = dbConn
 	return nil
 }
+
+// ApplyPositionApp applies the DBCfg to a CoreApp.
+func (cfg DBCfg) ApplyPositionApp(app *apps.PositionApp) error {
+	dbConn, err := getDBConn("core", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
+	if err != nil {
+		return errors.Wrap(err, "get db conn failed")
+	}
+	app.DB = dbConn
+	return nil
+}

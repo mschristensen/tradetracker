@@ -6,11 +6,16 @@ package apps
 
 import (
 	"context"
+
+	"github.com/sirupsen/logrus"
 )
+
+var logger logrus.FieldLogger = logrus.StandardLogger()
 
 // AppCfg configures an App.
 type AppCfg interface {
 	TradeAppCfg
+	PositionAppCfg
 	// ... add more here to configure additional apps
 }
 

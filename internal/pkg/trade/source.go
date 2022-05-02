@@ -1,5 +1,4 @@
-// Package tradesource provides an adapter for obtaining trade data.
-package tradesource
+package trade
 
 import (
 	"io"
@@ -9,23 +8,23 @@ import (
 	"tradetracker/pkg/models"
 )
 
-// TradeSource is a source of trade information.
+// Source provides an adapter for obtaining trade data.
 // It could be anything, from a file, a database, or an external Kafka stream.
-type TradeSource interface {
+type Source interface {
 	Next() (*models.Trade, error)
 }
 
-// RandomTradeSource is a source of random trade information.
-type RandomTradeSource struct {
+// RandomSource is a source of random trade information.
+type RandomSource struct {
 	total         int
 	n             int
 	r             *rand.Rand
 	instrumentIDs []int64
 }
 
-// NewRandomTradeSource creates a new RandomTradeSource.
-func NewRandomTradeSource(num int, instrumentIDs []int64) *RandomTradeSource {
-	return &RandomTradeSource{
+// NewRandomSource creates a new RandomSource.
+func NewRandomSource(num int, instrumentIDs []int64) *RandomSource {
+	return &RandomSource{
 		total:         num,
 		instrumentIDs: instrumentIDs,
 		r:             rand.New(rand.NewSource(time.Now().UnixNano())), // nolint:gosec // we don't need a secure PRNG here
@@ -33,7 +32,7 @@ func NewRandomTradeSource(num int, instrumentIDs []int64) *RandomTradeSource {
 }
 
 // Next returns the next trade, or io.EOF if we have generated the maximum number.
-func (t *RandomTradeSource) Next() (*models.Trade, error) {
+func (t *RandomSource) Next() (*models.Trade, error) {
 	if t.n >= t.total {
 		return nil, io.EOF
 	}
