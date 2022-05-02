@@ -33,7 +33,7 @@ func TestCreatePosition(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(
 		r.queries[createPosition],
-	)).WithArgs(position.InstrumentID, position.Size, position.Timestamp).WillReturnRows(
+	)).WithArgs(position.InstrumentID, position.Size, position.Timestamp.Unix()).WillReturnRows(
 		sqlmock.NewRows([]string{"id"}).AddRow(1),
 	)
 
