@@ -52,6 +52,7 @@ func testPosition(t *testing.T) {
 				require.Equal(t, now.Unix()+(i*10), position.Timestamp.Unix(), fmt.Sprintf("idx %d", i))
 				i++
 			}
+			require.NoError(t, rows.Err())
 			return nil
 		}),
 	).run(t)

@@ -11,6 +11,7 @@ import (
 	"tradetracker/internal/app/cfg"
 	"tradetracker/pkg/testhelper"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +40,7 @@ func newPositionAppTest(cfgs ...positionAppTestCfg) *positionAppTest {
 	return t
 }
 
-func withExpectedError(expectedErr error) positionAppTestCfg {
+func withExpectedError(expectedErr error) positionAppTestCfg { // nolint: unused,deadcode // may come in handy
 	return func(t *positionAppTest) {
 		t.expectedErr = func(t *testing.T, err error) {
 			require.ErrorIs(t, err, expectedErr)
@@ -104,24 +105,9 @@ func (tst *positionAppTest) run(t *testing.T) {
 	}
 }
 
-func loadSymbols() testhelper.DBFunc {
-	return func(db *sql.DB) error {
-		_, err := db.Exec(`
-			INSERT INTO symbols (symbol) VALUES
-				('GBP'),
-				('BTC'),
-				('ETH'),
-				('XRP'),
-				('BCH'),
-				('LTC');
-		`)
-		return err
-	}
-}
-
-func exec(query string) testhelper.DBFunc {
+func exec(query string) testhelper.DBFunc { // nolint: unused,deadcode // may come in handy
 	return func(db *sql.DB) error {
 		_, err := db.Exec(query)
-		return err
+		return errors.Wrap(err, "exec failed")
 	}
 }
