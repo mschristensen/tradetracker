@@ -64,8 +64,8 @@ func getDBConn(name, host string, port int, database, user, password string) (*s
 	return dbConn, nil
 }
 
-// ApplyTraderApp applies the DBCfg to a CoreApp.
-func (cfg DBCfg) ApplyTraderApp(app *apps.TraderApp) error {
+// ApplyTradeApp applies the DBCfg to a CoreApp.
+func (cfg DBCfg) ApplyTradeApp(app *apps.TradeApp) error {
 	dbConn, err := getDBConn("core", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
 	if err != nil {
 		return errors.Wrap(err, "get db conn failed")

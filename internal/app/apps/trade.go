@@ -17,32 +17,32 @@ import (
 
 var logger logrus.FieldLogger = logrus.StandardLogger()
 
-// TraderAppCfg configures a TraderApp.
-type TraderAppCfg interface {
-	ApplyTraderApp(*TraderApp) error
+// TradeAppCfg configures a TradeApp.
+type TradeAppCfg interface {
+	ApplyTradeApp(*TradeApp) error
 }
 
-// TraderApp is the demo application responsible for carrying out CLI commands.
-type TraderApp struct {
+// TradeApp is the demo application responsible for carrying out CLI commands.
+type TradeApp struct {
 	DB *sql.DB `validate:"required"`
 }
 
-// NewTraderApp creates a new TraderApp.
-func NewTraderApp(cfgs ...TraderAppCfg) (*TraderApp, error) {
-	app := &TraderApp{}
+// NewTradeApp creates a new TradeApp.
+func NewTradeApp(cfgs ...TradeAppCfg) (*TradeApp, error) {
+	app := &TradeApp{}
 	for _, cfg := range cfgs {
-		if err := cfg.ApplyTraderApp(app); err != nil {
-			return nil, errors.Wrap(err, "apply TraderApp cfg failed")
+		if err := cfg.ApplyTradeApp(app); err != nil {
+			return nil, errors.Wrap(err, "apply TradeApp cfg failed")
 		}
 	}
 	if err := validate.Validate().Struct(app); err != nil {
-		return nil, errors.Wrap(err, "validate TraderApp failed")
+		return nil, errors.Wrap(err, "validate TradeApp failed")
 	}
 	return app, nil
 }
 
 // Run runs the app.
-func (app *TraderApp) Run(ctx context.Context, _ []string) error {
+func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	r, err := repo.NewRepo(repo.WithDB(app.DB))

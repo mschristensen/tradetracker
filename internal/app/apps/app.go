@@ -10,7 +10,7 @@ import (
 
 // AppCfg configures an App.
 type AppCfg interface {
-	TraderAppCfg
+	TradeAppCfg
 	// ... add more here to configure additional apps
 }
 
