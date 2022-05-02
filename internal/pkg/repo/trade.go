@@ -8,7 +8,7 @@ import (
 )
 
 // TradeRepo is used to perform CRUD operations on trade records in the database.
-//go:generate mockery --name TradeRepo --filename transaction_repo_mock.go
+//go:generate mockery --name TradeRepo --filename trade_repo_mock.go
 type TradeRepo interface {
 	CreateTrade(ctx context.Context, trade *models.Trade) (int, error)
 }

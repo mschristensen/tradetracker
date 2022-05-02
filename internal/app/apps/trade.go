@@ -45,25 +45,25 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 	if err != nil {
 		return errors.Wrap(err, "new repo failed")
 	}
-	ps := pubsub.NewMemoryPubSub()
-	ts := trade.NewRandomSource(100, []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-	tc, err := trade.NewConsumer(
+	stream := pubsub.NewMemoryPubSub()
+	tradeSource := trade.NewRandomSource(100, []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+	processor, err := trade.NewProcessor(
 		trade.WithRepo(r),
-		trade.WithSubscriber(ps),
+		trade.WithSubscriber(stream),
 	)
 	if err != nil {
-		return errors.Wrap(err, "new trade consumer failed")
+		return errors.Wrap(err, "new trade processor failed")
 	}
 	go func() {
 		for {
-			tr, err := ts.Next()
+			tr, err := tradeSource.Next()
 			if errors.Is(err, io.EOF) {
 				break
 			}
 			if err != nil {
 				logger.Fatalln(errors.Wrap(err, "next trade failed"))
 			}
-			if err := ps.Publish(pubsub.Message{
+			if err := stream.Publish(pubsub.Message{
 				Topic: pubsub.TradeTopic,
 				Value: tr,
 			}); err != nil {
@@ -76,5 +76,5 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 			}
 		}
 	}()
-	return errors.Wrap(tc.Consume(ctx), "consume trades failed")
+	return errors.Wrap(processor.Process(ctx), "process trades failed")
 }
