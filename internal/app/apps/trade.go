@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"strconv"
 	"time"
 
 	"tradetracker/internal/pkg/pubsub"
@@ -39,18 +40,45 @@ func NewTradeApp(cfgs ...TradeAppCfg) (*TradeApp, error) {
 }
 
 // Run runs the app.
-func (app *TradeApp) Run(ctx context.Context, _ []string) error {
+func (app *TradeApp) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	// parse the arguments
+	if len(args) < 2 {
+		return errors.New("requires at least 3 arguments")
+	}
+	num, err := strconv.ParseInt(args[0], 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "parse instrument ID failed")
+	}
+	var instrumentIDs []int64
+	for i := range args {
+		if i == 0 {
+			continue
+		}
+		instrumentID, err := strconv.ParseInt(args[i], 10, 64)
+		if err != nil {
+			return errors.Wrap(err, "parse instrument ID failed")
+		}
+		instrumentIDs = append(instrumentIDs, instrumentID)
+	}
+	// set up the repository to interact with trades and positions in the database
 	r, err := repo.NewRepo(repo.WithDB(app.DB))
 	if err != nil {
 		return errors.Wrap(err, "new repo failed")
 	}
+	// create a dummy pubsub stream
 	stream := pubsub.NewMemoryPubSub()
-	tradeSource := trade.NewRandomSource(100, time.Date(2022, time.May, 2, 0, 0, 0, 0, time.UTC), []int64{1})
+	// create a trade source to generate random trade data
+	tradeSource := trade.NewRandomSource(
+		num,
+		time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), // trades generated from Jan 1, 2000 until now
+		instrumentIDs,
+	)
 	if err := tradeSource.Prepare(ctx); err != nil {
 		return errors.Wrap(err, "prepare trade source failed")
 	}
+	// create a trade processor to process the trade data coming in on the stream
 	processor, err := trade.NewProcessor(
 		trade.WithRepo(r),
 		trade.WithSubscriber(stream),
@@ -58,6 +86,7 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 	if err != nil {
 		return errors.Wrap(err, "new trade processor failed")
 	}
+	// send the random trade data across the stream for it to be processed
 	go func() {
 		defer func() {
 			if err := stream.Close(ctx, pubsub.TradeTopic); err != nil {
@@ -85,5 +114,6 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 			}
 		}
 	}()
+	// process the trade data
 	return errors.Wrap(processor.Process(ctx), "process trades failed")
 }

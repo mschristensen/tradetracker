@@ -21,15 +21,15 @@ type Source interface {
 
 // RandomSource is a source of random trade information.
 type RandomSource struct {
-	total         int
-	num           int
+	total         int64
+	num           int64
 	baseDate      time.Time
 	instrumentIDs []int64
 	r             *rand.Rand
 }
 
 // NewRandomSource creates a new RandomSource.
-func NewRandomSource(num int, baseDate time.Time, instrumentIDs []int64) *RandomSource {
+func NewRandomSource(num int64, baseDate time.Time, instrumentIDs []int64) *RandomSource {
 	return &RandomSource{
 		total:         num,
 		baseDate:      baseDate,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"strconv"
 	"time"
 
 	"tradetracker/internal/pkg/position"
@@ -41,32 +42,52 @@ func NewPositionApp(cfgs ...PositionAppCfg) (*PositionApp, error) {
 }
 
 // Run runs the app.
-func (app *PositionApp) Run(ctx context.Context, _ []string) error {
+func (app *PositionApp) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	// parse the arguments
+	if len(args) < 1 {
+		return errors.New("missing instrument ID argument")
+	}
+	instrumentID, err := strconv.ParseInt(args[0], 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "parse instrument ID failed")
+	}
+	timestamp := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC) // trades generated from Jan 1, 2000 until now
+	if len(args) > 1 {
+		timestamp, err = time.Parse(time.RFC3339, args[1])
+		if err != nil {
+			return errors.Wrap(err, "parse timestamp failed")
+		}
+	}
+	// set up the repository to interact with trades and positions in the database
 	r, err := repo.NewRepo(repo.WithDB(app.DB))
 	if err != nil {
 		return errors.Wrap(err, "new repo failed")
 	}
+	// create a dummy pubsub stream
 	stream := pubsub.NewMemoryPubSub()
-	tradeSource := trade.NewRepoSource(r, 1, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	// create a trade source to read trade data from the repo
+	tradeSource := trade.NewRepoSource(r, instrumentID, timestamp)
 	if err := tradeSource.Prepare(ctx); err != nil {
 		return errors.Wrap(err, "prepare trade source failed")
 	}
+	// create a position processor to generate positions from the trade data coming in on the stream
 	processor, err := position.NewProcessor(
 		position.WithRepo(r),
 		position.WithSubscriber(stream),
 		position.WithBuilder(
 			position.NewBinnedBuilder(1, &models.Position{
-				InstrumentID: 1,
-				Size:         0,
-				Timestamp:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				InstrumentID: instrumentID,
+				Size:         0, // TODO pull the initial position
+				Timestamp:    timestamp,
 			}),
 		),
 	)
 	if err != nil {
 		return errors.Wrap(err, "new position processor failed")
 	}
+	// send the trade data across the stream for it to be processed
 	go func() {
 		defer func() {
 			if err := stream.Close(ctx, pubsub.TradeTopic); err != nil {
@@ -94,5 +115,6 @@ func (app *PositionApp) Run(ctx context.Context, _ []string) error {
 			}
 		}
 	}()
+	// process the trade data
 	return errors.Wrap(processor.Process(ctx), "process positions failed")
 }

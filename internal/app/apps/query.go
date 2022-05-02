@@ -3,6 +3,7 @@ package apps
 import (
 	"context"
 	"database/sql"
+	"strconv"
 	"time"
 
 	"tradetracker/internal/pkg/repo"
@@ -37,17 +38,26 @@ func NewQueryApp(cfgs ...QueryAppCfg) (*QueryApp, error) {
 }
 
 // Run runs the app.
-func (app *QueryApp) Run(ctx context.Context, _ []string) error {
+func (app *QueryApp) Run(ctx context.Context, args []string) error {
+	if len(args) < 1 {
+		return errors.New("missing instrument ID argument")
+	}
+	instrumentID, err := strconv.ParseInt(args[0], 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "parse instrument ID failed")
+	}
+	timestamp := time.Now()
+	if len(args) > 1 {
+		timestamp, err = time.Parse(time.RFC3339, args[1])
+		if err != nil {
+			return errors.Wrap(err, "parse timestamp failed")
+		}
+	}
 	r, err := repo.NewRepo(repo.WithDB(app.DB))
 	if err != nil {
 		return errors.Wrap(err, "new repo failed")
 	}
-	instrumentID := int64(1)
-	timestamp, err := time.Parse(time.RFC3339, "2022-05-02T18:33:36Z")
-	if err != nil {
-		return errors.Wrap(err, "parse timestamp failed")
-	}
-	pos, err := r.ReadPosition(ctx, instrumentID, timestamp)
+	pos, err := r.ReadPosition(ctx, int64(instrumentID), timestamp)
 	if err != nil {
 		return errors.Wrap(err, "read position failed")
 	}

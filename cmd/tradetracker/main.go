@@ -4,6 +4,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"tradetracker/internal"
 	"tradetracker/internal/app/apps"
@@ -26,21 +28,62 @@ var (
 	}
 
 	tradeCmd = &cobra.Command{
-		Use:   "trade",
-		Short: "Generates trade data.",
-		RunE:  runCmd,
+		Use:   "trade num instrumentID...",
+		Short: "Generates random trade data.",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 2 {
+				return errors.New("requires at least two arguments")
+			}
+			for i := range args {
+				if _, err := strconv.ParseInt(args[i], 10, 64); err != nil {
+					return errors.Wrap(err, "parse arg failed")
+				}
+			}
+			return nil
+		},
+		RunE: runCmd,
 	}
 
 	positionCmd = &cobra.Command{
-		Use:   "position",
-		Short: "Generates positions from trade data.",
-		RunE:  runCmd,
+		Use:   "position intrumentID [timestamp]",
+		Short: "Generates positions for an instrument from trade data after the given timestamp.",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("requires at least one argument")
+			}
+			if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+				return errors.Wrap(err, "parse instrumentID failed")
+			}
+			if len(args) <= 1 {
+				return nil
+			}
+			if _, err := time.Parse(time.RFC3339, args[1]); err != nil {
+				return errors.Wrap(err, "parse timestamp failed")
+			}
+			return nil
+		},
+		RunE: runCmd,
 	}
 
 	queryCmd = &cobra.Command{
-		Use:   "query",
+		Use:   "query intrumentID [timestamp]",
 		Short: "Query for the position of an instrument at a given time.",
-		RunE:  runCmd,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("requires at least one argument")
+			}
+			if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+				return errors.Wrap(err, "parse instrument ID failed")
+			}
+			if len(args) <= 1 {
+				return nil
+			}
+			if _, err := time.Parse(time.RFC3339, args[1]); err != nil {
+				return errors.Wrap(err, "parse timestamp failed")
+			}
+			return nil
+		},
+		RunE: runCmd,
 	}
 )
 
