@@ -4,6 +4,8 @@
 
 Trade Tracker is a demo CLI application for ingesting trade data for a variety of instruments and tracking positions in those instruments.
 
+https://user-images.githubusercontent.com/9295665/166334908-6c3e70a2-6af7-411a-a17a-d55312de0751.mov
+
 ### Features
 
 Trade Tracker supports the following features:
