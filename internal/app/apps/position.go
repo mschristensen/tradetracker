@@ -87,6 +87,12 @@ func (app *PositionApp) Run(ctx context.Context, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "new position processor failed")
 	}
+	// delete positions for the instrument from the date given
+	n, err := r.DeletePositions(ctx, instrumentID, timestamp)
+	if err != nil {
+		return errors.Wrap(err, "delete positions failed")
+	}
+	logger.Infof("cleared %d positions", n)
 	// send the trade data across the stream for it to be processed
 	go func() {
 		defer func() {

@@ -17,10 +17,11 @@ var queries embed.FS
 
 // These are query names.
 const (
-	createTrade    = "create_trade.sql"
-	createPosition = "create_position.sql"
-	readTrades     = "read_trades.sql"
-	readPosition   = "read_position.sql"
+	createTrade     = "create_trade.sql"
+	createPosition  = "create_position.sql"
+	readTrades      = "read_trades.sql"
+	readPosition    = "read_position.sql"
+	deletePositions = "delete_positions.sql"
 )
 
 // Repo interacts with the postgres database.
@@ -38,6 +39,7 @@ func NewRepo(cfgs ...ConfigFunc) (*Repo, error) {
 		createPosition,
 		readTrades,
 		readPosition,
+		deletePositions,
 		// TODO: add more queries here...
 	}
 	r.queries = make(map[string]string, len(queryFiles))
