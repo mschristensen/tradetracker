@@ -28,7 +28,7 @@ func NewBinnedBuilder(binWidthSeconds, instrumentID int64) *BinnedBuilder {
 
 // Build aggregates trades within time windows of binSize seconds to produce positions.
 // It assumes that the trades are for a given instrument and are sorted by timestamp; if not, and error is returned.
-// TODO implement aggregation by bin size.
+// NOTE: for now, no actual bin aggregation is implemented, but this is included for demo purposes
 func (p *BinnedBuilder) Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error {
 	defer close(out)
 	lastPos := &models.Position{
