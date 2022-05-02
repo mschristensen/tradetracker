@@ -20,6 +20,7 @@ const (
 	createTrade    = "create_trade.sql"
 	createPosition = "create_position.sql"
 	readTrades     = "read_trades.sql"
+	readPosition   = "read_position.sql"
 )
 
 // Repo interacts with the postgres database.
@@ -36,6 +37,7 @@ func NewRepo(cfgs ...ConfigFunc) (*Repo, error) {
 		createTrade,
 		createPosition,
 		readTrades,
+		readPosition,
 		// TODO: add more queries here...
 	}
 	r.queries = make(map[string]string, len(queryFiles))

@@ -36,6 +36,12 @@ var (
 		Short: "Generates positions from trade data.",
 		RunE:  runCmd,
 	}
+
+	queryCmd = &cobra.Command{
+		Use:   "query",
+		Short: "Query for the position of an instrument at a given time.",
+		RunE:  runCmd,
+	}
 )
 
 func newApp(_ context.Context, cmd *cobra.Command, args []string) (apps.App, []string, error) {
@@ -56,6 +62,14 @@ func newApp(_ context.Context, cmd *cobra.Command, args []string) (apps.App, []s
 		)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "new trade app failed")
+		}
+		return app, args, nil
+	case "query":
+		app, err = apps.NewQueryApp(
+			cfg.DBFromEnv(),
+		)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "new query app failed")
 		}
 		return app, args, nil
 	default:
@@ -131,6 +145,7 @@ func init() {
 	rootCmd.AddCommand(
 		tradeCmd,
 		positionCmd,
+		queryCmd,
 	)
 }
 

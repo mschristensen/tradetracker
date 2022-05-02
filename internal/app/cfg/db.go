@@ -66,7 +66,7 @@ func getDBConn(name, host string, port int, database, user, password string) (*s
 
 // ApplyTradeApp applies the DBCfg to a CoreApp.
 func (cfg DBCfg) ApplyTradeApp(app *apps.TradeApp) error {
-	dbConn, err := getDBConn("core", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
+	dbConn, err := getDBConn("trade", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
 	if err != nil {
 		return errors.Wrap(err, "get db conn failed")
 	}
@@ -76,7 +76,17 @@ func (cfg DBCfg) ApplyTradeApp(app *apps.TradeApp) error {
 
 // ApplyPositionApp applies the DBCfg to a CoreApp.
 func (cfg DBCfg) ApplyPositionApp(app *apps.PositionApp) error {
-	dbConn, err := getDBConn("core", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
+	dbConn, err := getDBConn("position", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
+	if err != nil {
+		return errors.Wrap(err, "get db conn failed")
+	}
+	app.DB = dbConn
+	return nil
+}
+
+// ApplyQueryApp applies the DBCfg to a QueryApp.
+func (cfg DBCfg) ApplyQueryApp(app *apps.QueryApp) error {
+	dbConn, err := getDBConn("query", cfg.host, cfg.port, cfg.dbName, cfg.user, cfg.password)
 	if err != nil {
 		return errors.Wrap(err, "get db conn failed")
 	}
