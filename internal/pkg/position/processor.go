@@ -18,7 +18,7 @@ var logger logrus.FieldLogger = logrus.StandardLogger()
 type Processor struct {
 	repo    repo.PositionRepo
 	sub     pubsub.Subscriber
-	builder PositionBuilder
+	builder Builder
 }
 
 // Cfg is a configuration function for Processor.
@@ -51,8 +51,8 @@ func WithSubscriber(source pubsub.Subscriber) Cfg {
 	}
 }
 
-// PositionBuilder sets the trade source for the Processor.
-func WithPositionBuilder(builder PositionBuilder) Cfg {
+// WithBuilder sets the position builder for the Processor.
+func WithBuilder(builder Builder) Cfg {
 	return func(c *Processor) error {
 		c.builder = builder
 		return nil
@@ -62,13 +62,11 @@ func WithPositionBuilder(builder PositionBuilder) Cfg {
 // Process consumes trade messages from the trade source and uses them to build positions.
 func (t *Processor) Process(ctx context.Context) error {
 	tradeCh := make(chan *models.Trade)
-	defer close(tradeCh)
 	positionCh := make(chan *models.Position)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		defer close(positionCh)
 		if err := t.builder.Build(ctx, tradeCh, positionCh); err != nil {
 			logger.Fatalln(errors.Wrap(err, "build positions failed"))
 		}
@@ -99,6 +97,7 @@ func (t *Processor) Process(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "subscribe failed")
 	}
+	close(tradeCh)
 	wg.Wait()
 	return nil
 }

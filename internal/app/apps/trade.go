@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"time"
 
 	"tradetracker/internal/pkg/pubsub"
 	"tradetracker/internal/pkg/repo"
@@ -46,7 +47,10 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 		return errors.Wrap(err, "new repo failed")
 	}
 	stream := pubsub.NewMemoryPubSub()
-	tradeSource := trade.NewRandomSource(100, []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+	tradeSource := trade.NewRandomSource(100, time.Date(2022, time.May, 2, 0, 0, 0, 0, time.UTC), []int64{1})
+	if err := tradeSource.Prepare(ctx); err != nil {
+		return errors.Wrap(err, "prepare trade source failed")
+	}
 	processor, err := trade.NewProcessor(
 		trade.WithRepo(r),
 		trade.WithSubscriber(stream),
@@ -55,6 +59,11 @@ func (app *TradeApp) Run(ctx context.Context, _ []string) error {
 		return errors.Wrap(err, "new trade processor failed")
 	}
 	go func() {
+		defer func() {
+			if err := stream.Close(ctx, pubsub.TradeTopic); err != nil {
+				logger.Fatalln(errors.Wrap(err, "close trade stream failed"))
+			}
+		}()
 		for {
 			tr, err := tradeSource.Next()
 			if errors.Is(err, io.EOF) {

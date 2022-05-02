@@ -2,25 +2,26 @@ package position
 
 import (
 	"context"
+	"time"
 	"tradetracker/pkg/models"
 
 	"github.com/pkg/errors"
 )
 
-// PositionBuilder is used to build positions from trades.
-type PositionBuilder interface {
+// Builder is used to build positions from trades.
+type Builder interface {
 	Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error
 }
 
-// BinnedPositionBuilder builds positions from trades that occur within the a fixed-width bin.
-type BinnedPositionBuilder struct {
+// BinnedBuilder builds positions from trades that occur within the a fixed-width bin.
+type BinnedBuilder struct {
 	binWidthSeconds int64
 	initialPosition *models.Position
 }
 
-// NewBinnedPositionBuilder creates a new BinnedPositionBuilder.
-func NewBinnedPositionBuilder(binWidthSeconds int64, initialPosition *models.Position) *BinnedPositionBuilder {
-	return &BinnedPositionBuilder{
+// NewBinnedBuilder creates a new BinnedBuilder.
+func NewBinnedBuilder(binWidthSeconds int64, initialPosition *models.Position) *BinnedBuilder {
+	return &BinnedBuilder{
 		binWidthSeconds: binWidthSeconds,
 		initialPosition: initialPosition,
 	}
@@ -28,7 +29,7 @@ func NewBinnedPositionBuilder(binWidthSeconds int64, initialPosition *models.Pos
 
 // Build aggregates trades within time windows of binSize seconds to produce positions.
 // It assumes that the trades are for a given instrument and are sorted by timestamp; if not, and error is returned.
-func (p *BinnedPositionBuilder) Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error {
+func (p *BinnedBuilder) Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error {
 	defer close(out)
 	pos := p.initialPosition
 	for {
@@ -43,7 +44,12 @@ func (p *BinnedPositionBuilder) Build(ctx context.Context, in <-chan *models.Tra
 				return ErrInstrumentMismatch
 			}
 			if trade.Timestamp.Unix() < pos.Timestamp.Unix() {
-				return ErrNotSorted
+				return errors.Wrapf(
+					ErrNotSorted,
+					"trade timestamp %s is before position timestamp %s",
+					trade.Timestamp.Format(time.RFC3339),
+					pos.Timestamp.Format(time.RFC3339),
+				)
 			}
 			if trade.Timestamp.Unix()-pos.Timestamp.Unix() <= p.binWidthSeconds {
 				pos.Size += trade.Size

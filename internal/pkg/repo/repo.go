@@ -7,7 +7,10 @@ import (
 	"tradetracker/internal/pkg/validate"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
+
+var logger logrus.FieldLogger = logrus.StandardLogger()
 
 //go:embed query/*.sql
 var queries embed.FS
@@ -16,6 +19,7 @@ var queries embed.FS
 const (
 	createTrade    = "create_trade.sql"
 	createPosition = "create_position.sql"
+	readTrades     = "read_trades.sql"
 )
 
 // Repo interacts with the postgres database.
@@ -31,6 +35,7 @@ func NewRepo(cfgs ...ConfigFunc) (*Repo, error) {
 	queryFiles := []string{
 		createTrade,
 		createPosition,
+		readTrades,
 		// TODO: add more queries here...
 	}
 	r.queries = make(map[string]string, len(queryFiles))
