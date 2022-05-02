@@ -18,7 +18,7 @@ func (r *Repo) CreateTrade(ctx context.Context, trade *models.Trade) (int, error
 	var txID int
 	if err := r.db.QueryRowContext(ctx,
 		r.queries[createTrade],
-		trade.InstrumentID, trade.Size, trade.Price, trade.Timestamp,
+		trade.InstrumentID, trade.Size, trade.Price, trade.Timestamp.Unix(),
 	).Scan(&txID); err != nil {
 		return 0, errors.Wrap(err, "could not create trade")
 	}

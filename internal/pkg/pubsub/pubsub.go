@@ -1,57 +1,101 @@
+// Package pubsub implents a dummy pub sub system to demonstrate how the application
+// might integrate with a real system like Kafka.
 package pubsub
 
-// PubSub supports publishing and subscribing to messages on a topic.
-type PubSub interface {
-	// Publish publishes a message on a topic.
+import (
+	"context"
+	"sync"
+
+	"github.com/pkg/errors"
+)
+
+// Publisher supports publishing messages to a topic.
+type Publisher interface {
 	Publish(msg Message) error
-	// Subscribe subscribes to messages on a topic.
-	Subscribe(topic string, handler func(m *Message)) error
 }
+
+// Subscriber supports subscribing to messages on a topic.
+type Subscriber interface {
+	Subscribe(ctx context.Context, topic Topic, handler Handler) error
+}
+
+// Closer supports closing a topic.
+type Closer interface {
+	Close(ctx context.Context, topic Topic) error
+}
+
+// PublisherSubscriber supports both publishing and subscribing to messages on a topic,
+// as well as closing the topic.
+type PublisherSubscriber interface {
+	Publisher
+	Subscriber
+	Closer
+}
+
+// Handler is a function that handles a message.
+type Handler func(m Message) error
 
 // Message describes the message topic and payload.
 type Message struct {
-	Topic string
+	Topic Topic
 	Value interface{}
-}
-
-// Channel is a channel for publishing messages.
-type Channel struct {
-	ch chan Message
 }
 
 // MemoryPubSub is a simple in-memory PubSub implementation.
 // Note that this naïve implementation only supports one consumer per topic.
 type MemoryPubSub struct {
-	topics map[string]*Channel
+	topics map[Topic]chan Message
+	mu     sync.Mutex
 }
 
 // NewMemoryPubSub creates a new MemoryPubSub.
 func NewMemoryPubSub() *MemoryPubSub {
 	return &MemoryPubSub{
-		topics: make(map[string]*Channel),
+		topics: make(map[Topic]chan Message),
 	}
 }
 
-func (s *MemoryPubSub) Subscribe(topic string, handler func(m *Message)) error {
-	if _, ok := s.topics[topic]; ok {
-		return ErrTopicAlreadySubscribed
-	}
-	s.topics[topic] = &Channel{
-		ch: make(chan Message),
-	}
-	go func() {
-		for {
-			c := <-s.topics[topic].ch
-			handler(&c)
-		}
-	}()
-	return nil
-}
-
+// Publish publishes a message on a topic.
+// It returns an error if the topic is closed.
 func (s *MemoryPubSub) Publish(msg Message) error {
 	if _, ok := s.topics[msg.Topic]; !ok {
 		return ErrTopicClosed
 	}
-	s.topics[msg.Topic].ch <- msg
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.topics[msg.Topic] <- msg
+	return nil
+}
+
+// Subscribe subscribes to messages on a topic.
+// It blocks until the topic is closed or the context is cancelled.
+func (s *MemoryPubSub) Subscribe(ctx context.Context, topic Topic, handler Handler) error {
+	if _, ok := s.topics[topic]; ok {
+		return ErrTopicAlreadySubscribed
+	}
+	s.topics[topic] = make(chan Message)
+	for {
+		select {
+		case c, ok := <-s.topics[topic]:
+			if !ok {
+				return nil
+			}
+			if err := handler(c); err != nil {
+				return errors.Wrap(err, "handler failed")
+			}
+		case <-ctx.Done():
+			return errors.Wrap(ctx.Err(), "context cancelled")
+		}
+	}
+}
+
+// Close closes the topic.
+func (s *MemoryPubSub) Close(_ context.Context, topic Topic) error {
+	if _, ok := s.topics[topic]; !ok {
+		return ErrTopicClosed
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	close(s.topics[topic])
 	return nil
 }

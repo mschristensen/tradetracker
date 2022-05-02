@@ -39,9 +39,9 @@ ALTER TABLE public.migrations OWNER TO tradetracker;
 CREATE TABLE public.trades (
     id integer NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    instrument_id integer NOT NULL,
-    size integer NOT NULL,
-    price money NOT NULL,
+    instrument_id bigint NOT NULL,
+    size bigint NOT NULL,
+    price numeric NOT NULL,
     "timestamp" timestamp without time zone NOT NULL
 );
 
