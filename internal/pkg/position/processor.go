@@ -16,8 +16,9 @@ var logger logrus.FieldLogger = logrus.StandardLogger()
 
 // Processor aggregates trades from a pub-sub system to build positions and stores them in a repository.
 type Processor struct {
-	repo repo.PositionRepo
-	sub  pubsub.Subscriber
+	repo    repo.PositionRepo
+	sub     pubsub.Subscriber
+	builder PositionBuilder
 }
 
 // Cfg is a configuration function for Processor.
@@ -42,7 +43,7 @@ func WithRepo(r repo.PositionRepo) Cfg {
 	}
 }
 
-// WithSubscriber sets the trade source for the TradeProcessor.
+// WithSubscriber sets the trade source for the Processor.
 func WithSubscriber(source pubsub.Subscriber) Cfg {
 	return func(c *Processor) error {
 		c.sub = source
@@ -50,21 +51,11 @@ func WithSubscriber(source pubsub.Subscriber) Cfg {
 	}
 }
 
-// buildPositions aggregates trades within time windows of binSize milliseconds to produce positions.
-// It assumes that the trades are sorted by timestamp; if not, and error is returned.
-func buildPositions(ctx context.Context, binSize int64, in <-chan *models.Trade, out chan<- *models.Position) error {
-	defer close(out)
-	pos := &models.Position{}
-	for {
-		select {
-		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "context cancelled")
-		case _, ok := <-in:
-			if !ok {
-				return nil
-			}
-			out <- pos
-		}
+// PositionBuilder sets the trade source for the Processor.
+func WithPositionBuilder(builder PositionBuilder) Cfg {
+	return func(c *Processor) error {
+		c.builder = builder
+		return nil
 	}
 }
 
@@ -78,7 +69,7 @@ func (t *Processor) Process(ctx context.Context) error {
 	go func() {
 		defer wg.Done()
 		defer close(positionCh)
-		if err := buildPositions(ctx, 0, tradeCh, positionCh); err != nil {
+		if err := t.builder.Build(ctx, tradeCh, positionCh); err != nil {
 			logger.Fatalln(errors.Wrap(err, "build positions failed"))
 		}
 	}()

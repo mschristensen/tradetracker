@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"time"
 
 	"tradetracker/internal/pkg/position"
 	"tradetracker/internal/pkg/pubsub"
 	"tradetracker/internal/pkg/repo"
 	"tradetracker/internal/pkg/trade"
 	"tradetracker/internal/pkg/validate"
+	"tradetracker/pkg/models"
 
 	"github.com/pkg/errors"
 )
@@ -45,10 +47,17 @@ func (app *PositionApp) Run(ctx context.Context, _ []string) error {
 		return errors.Wrap(err, "new repo failed")
 	}
 	stream := pubsub.NewMemoryPubSub()
-	tradeSource := trade.NewRandomSource(100, []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) // TODO use a sorted trade source for a given instrument
+	tradeSource := trade.NewRandomSource(100, []int64{1}) // TODO use a sorted trade source for a given instrument
 	processor, err := position.NewProcessor(
 		position.WithRepo(r),
 		position.WithSubscriber(stream),
+		position.WithPositionBuilder(
+			position.NewBinnedPositionBuilder(1000, &models.Position{
+				InstrumentID: 1,
+				Size:         0,
+				Timestamp:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			}),
+		),
 	)
 	if err != nil {
 		return errors.Wrap(err, "new position processor failed")
