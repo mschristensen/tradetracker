@@ -29,9 +29,10 @@ func NewBinnedBuilder(binWidthSeconds int64, initialPosition *models.Position) *
 
 // Build aggregates trades within time windows of binSize seconds to produce positions.
 // It assumes that the trades are for a given instrument and are sorted by timestamp; if not, and error is returned.
+// TODO implement aggregation by bin size
 func (p *BinnedBuilder) Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error {
 	defer close(out)
-	pos := p.initialPosition
+	lastPos := p.initialPosition
 	for {
 		select {
 		case <-ctx.Done():
@@ -40,23 +41,24 @@ func (p *BinnedBuilder) Build(ctx context.Context, in <-chan *models.Trade, out 
 			if !ok {
 				return nil
 			}
-			if trade.InstrumentID != pos.InstrumentID {
+			if trade.InstrumentID != lastPos.InstrumentID {
 				return ErrInstrumentMismatch
 			}
-			if trade.Timestamp.Unix() < pos.Timestamp.Unix() {
+			if trade.Timestamp.Unix() < lastPos.Timestamp.Unix() {
 				return errors.Wrapf(
 					ErrNotSorted,
 					"trade timestamp %s is before position timestamp %s",
 					trade.Timestamp.Format(time.RFC3339),
-					pos.Timestamp.Format(time.RFC3339),
+					lastPos.Timestamp.Format(time.RFC3339),
 				)
 			}
-			if trade.Timestamp.Unix()-pos.Timestamp.Unix() <= p.binWidthSeconds {
-				pos.Size += trade.Size
-				continue
+			pos := &models.Position{
+				InstrumentID: lastPos.InstrumentID,
+				Size:         lastPos.Size + trade.Size,
+				Timestamp:    trade.Timestamp,
 			}
-			pos.Timestamp = trade.Timestamp
 			out <- pos
+			lastPos = pos
 		}
 	}
 }
