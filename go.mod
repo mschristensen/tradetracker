@@ -14,7 +14,10 @@ require github.com/jackc/pgx/v4 v4.15.0
 
 require github.com/go-playground/validator/v10 v10.10.1
 
-require github.com/stretchr/testify v1.7.1
+require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/stretchr/testify v1.7.1
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect

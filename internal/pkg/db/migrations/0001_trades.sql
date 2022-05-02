@@ -4,7 +4,7 @@ CREATE TABLE trades (
   created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   instrument_id int NOT NULL,
   size int NOT NULL,
-  price money NOT NULL,
+  price numeric NOT NULL,
   timestamp timestamp without time zone NOT NULL
 );
 
