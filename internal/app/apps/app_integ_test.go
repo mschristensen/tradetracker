@@ -21,6 +21,7 @@ func TestPositionApp(t *testing.T) {
 		t.Skip()
 	}
 	t.Run("TestPosition", testPosition)
+	t.Run("TestPositionSuppliedExample", testPositionSuppliedExample)
 }
 
 type positionAppTest struct {
