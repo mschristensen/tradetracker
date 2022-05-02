@@ -13,7 +13,7 @@ import (
 type PositionRepo interface {
 	CreatePosition(ctx context.Context, position *models.Position) (int, error)
 	ReadPosition(ctx context.Context, instrumentID int64, timestamp time.Time) (*models.Position, error)
-	DeletePositions(ctx context.Context, instrumentID int64, after time.Time) (int64, error)
+	DeletePositions(ctx context.Context, instrumentID int64) (int64, error)
 }
 
 // CreatePosition creates a new position.
@@ -45,11 +45,11 @@ func (r *Repo) ReadPosition(ctx context.Context, instrumentID int64, timestamp t
 	return &position, nil
 }
 
-// DeletePositions deletes all positions for an instrument from a given time onwards.
-func (r *Repo) DeletePositions(ctx context.Context, instrumentID int64, after time.Time) (int64, error) {
+// DeletePositions deletes all positions for an instrument.
+func (r *Repo) DeletePositions(ctx context.Context, instrumentID int64) (int64, error) {
 	result, err := r.db.ExecContext(ctx,
 		r.queries[deletePositions],
-		instrumentID, after.Unix(),
+		instrumentID,
 	)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not delete positions")

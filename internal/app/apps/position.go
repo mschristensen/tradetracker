@@ -12,7 +12,6 @@ import (
 	"tradetracker/internal/pkg/repo"
 	"tradetracker/internal/pkg/trade"
 	"tradetracker/internal/pkg/validate"
-	"tradetracker/pkg/models"
 
 	"github.com/pkg/errors"
 )
@@ -53,13 +52,6 @@ func (app *PositionApp) Run(ctx context.Context, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "parse instrument ID failed")
 	}
-	timestamp := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC) // trades generated from Jan 1, 2000 until now
-	if len(args) > 1 {
-		timestamp, err = time.Parse(time.RFC3339, args[1])
-		if err != nil {
-			return errors.Wrap(err, "parse timestamp failed")
-		}
-	}
 	// set up the repository to interact with trades and positions in the database
 	r, err := repo.NewRepo(repo.WithDB(app.DB))
 	if err != nil {
@@ -68,31 +60,26 @@ func (app *PositionApp) Run(ctx context.Context, args []string) error {
 	// create a dummy pubsub stream
 	stream := pubsub.NewMemoryPubSub()
 	// create a trade source to read trade data from the repo
-	tradeSource := trade.NewRepoSource(r, instrumentID, timestamp)
+	tradeSource := trade.NewRepoSource(r, instrumentID, time.Time{}) // reads all trades, for purposes of this demo
 	if err := tradeSource.Prepare(ctx); err != nil {
 		return errors.Wrap(err, "prepare trade source failed")
 	}
-	// create a position processor to generate positions from the trade data coming in on the stream
 	processor, err := position.NewProcessor(
 		position.WithRepo(r),
 		position.WithSubscriber(stream),
 		position.WithBuilder(
-			position.NewBinnedBuilder(1, &models.Position{
-				InstrumentID: instrumentID,
-				Size:         0, // TODO pull the initial position
-				Timestamp:    timestamp,
-			}),
+			position.NewBinnedBuilder(1, instrumentID),
 		),
 	)
 	if err != nil {
 		return errors.Wrap(err, "new position processor failed")
 	}
 	// delete positions for the instrument from the date given
-	n, err := r.DeletePositions(ctx, instrumentID, timestamp)
+	n, err := r.DeletePositions(ctx, instrumentID)
 	if err != nil {
 		return errors.Wrap(err, "delete positions failed")
 	}
-	logger.Infof("cleared %d positions", n)
+	logger.Infof("deleted %d positions", n)
 	// send the trade data across the stream for it to be processed
 	go func() {
 		defer func() {

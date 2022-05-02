@@ -49,6 +49,8 @@ func NewDBClient(t testing.TB, name, owner, pw, host string, port int) *sql.DB {
 		// only allow an error indicating that the role already exists
 		require.Contains(t, err.Error(), fmt.Sprintf(`ERROR: role "%s" already exists (SQLSTATE 42710)`, owner))
 	}
+	_, err = mainDBClient.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", name))
+	require.NoError(t, err)
 	_, err = mainDBClient.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER %s;", name, owner))
 	require.NoError(t, err)
 

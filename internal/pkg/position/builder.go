@@ -15,15 +15,14 @@ type Builder interface {
 
 // BinnedBuilder builds positions from trades that occur within the a fixed-width bin.
 type BinnedBuilder struct {
-	binWidthSeconds int64
-	initialPosition *models.Position
+	binWidthSeconds, instrumentID int64
 }
 
 // NewBinnedBuilder creates a new BinnedBuilder.
-func NewBinnedBuilder(binWidthSeconds int64, initialPosition *models.Position) *BinnedBuilder {
+func NewBinnedBuilder(binWidthSeconds, instrumentID int64) *BinnedBuilder {
 	return &BinnedBuilder{
 		binWidthSeconds: binWidthSeconds,
-		initialPosition: initialPosition,
+		instrumentID:    instrumentID,
 	}
 }
 
@@ -32,7 +31,9 @@ func NewBinnedBuilder(binWidthSeconds int64, initialPosition *models.Position) *
 // TODO implement aggregation by bin size.
 func (p *BinnedBuilder) Build(ctx context.Context, in <-chan *models.Trade, out chan<- *models.Position) error {
 	defer close(out)
-	lastPos := p.initialPosition
+	lastPos := &models.Position{
+		InstrumentID: p.instrumentID,
+	}
 	for {
 		select {
 		case <-ctx.Done():

@@ -12,20 +12,16 @@ import (
 )
 
 type tst struct {
-	binSize         int64
-	initialPosition *models.Position
-	trades          []*models.Trade
-	positions       []*models.Position
+	binSize      int64
+	instrumentID int64
+	trades       []*models.Trade
+	positions    []*models.Position
 }
 
 var tsts []tst = []tst{
 	{
-		binSize: 1,
-		initialPosition: &models.Position{
-			InstrumentID: 1,
-			Size:         0,
-			Timestamp:    time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC),
-		},
+		binSize:      1,
+		instrumentID: 1,
 		trades: []*models.Trade{
 			{
 				InstrumentID: 1,
@@ -74,7 +70,7 @@ func TestBuilder(t *testing.T) {
 				require.NoError(t,
 					NewBinnedBuilder(
 						tsts[j].binSize,
-						tsts[j].initialPosition,
+						tsts[j].instrumentID,
 					).Build(ctx, tradesCh, positionsCh),
 				)
 			}()

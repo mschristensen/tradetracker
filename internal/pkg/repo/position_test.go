@@ -12,6 +12,10 @@ import (
 )
 
 func TestCreatePosition(t *testing.T) {
+	t.Parallel()
+	if !testing.Short() {
+		t.Skip()
+	}
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() {
@@ -29,7 +33,7 @@ func TestCreatePosition(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(
 		r.queries[createPosition],
-	)).WithArgs(position.InstrumentID, position.Size, position.Timestamp.Unix()).WillReturnRows(
+	)).WithArgs(position.InstrumentID, position.Size, position.Timestamp).WillReturnRows(
 		sqlmock.NewRows([]string{"id"}).AddRow(1),
 	)
 

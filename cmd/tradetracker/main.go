@@ -1,4 +1,4 @@
-// Package main is the Leather Wallet application entrypoint.
+// Package main is the TradeTracker application entrypoint.
 package main
 
 import (
@@ -45,7 +45,7 @@ var (
 	}
 
 	positionCmd = &cobra.Command{
-		Use:   "position intrumentID [timestamp]",
+		Use:   "position intrumentID",
 		Short: "Generates positions for an instrument from trade data after the given timestamp.",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
@@ -53,12 +53,6 @@ var (
 			}
 			if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
 				return errors.Wrap(err, "parse instrumentID failed")
-			}
-			if len(args) <= 1 {
-				return nil
-			}
-			if _, err := time.Parse(time.RFC3339, args[1]); err != nil {
-				return errors.Wrap(err, "parse timestamp failed")
 			}
 			return nil
 		},
