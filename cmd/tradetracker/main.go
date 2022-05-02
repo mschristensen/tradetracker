@@ -167,13 +167,6 @@ func init() {
 
 		&internal.MaxPGIdleConnFlag,
 		&internal.MaxPGOpenConnFlag,
-
-		&internal.RabbitMQHostFlag,
-		&internal.RabbitMQUserFlag,
-		&internal.RabbitMQPasswordFlag,
-		&internal.RabbitMQPortFlag,
-		&internal.RabbitMQVirtualHostFlag,
-		&internal.RabbitMQAppIDFlag,
 	})
 	if err != nil {
 		logger.Fatalln(err)

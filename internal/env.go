@@ -100,37 +100,6 @@ var (
 		Usage: "The max number of allowed open connections in the postgres connection pool.",
 		Value: &MaxPGOpenConn,
 	}
-
-	RabbitMQHostFlag = Flag{
-		Name:  "rabbitmq_host",
-		Usage: "The RabbitMQ host.",
-		Value: &RabbitMQHost,
-	}
-	RabbitMQUserFlag = Flag{
-		Name:  "rabbitmq_user",
-		Usage: "The RabbitMQ user.",
-		Value: &RabbitMQUser,
-	}
-	RabbitMQPasswordFlag = Flag{
-		Name:  "rabbitmq_password",
-		Usage: "The RabbitMQ password.",
-		Value: &RabbitMQPassword,
-	}
-	RabbitMQPortFlag = Flag{
-		Name:  "rabbitmq_port",
-		Usage: "The RabbitMQ port.",
-		Value: &RabbitMQPort,
-	}
-	RabbitMQVirtualHostFlag = Flag{
-		Name:  "rabbitmq_virtual_host",
-		Usage: "The RabbitMQ virtual host.",
-		Value: &RabbitMQVirtualHost,
-	}
-	RabbitMQAppIDFlag = Flag{
-		Name:  "rabbitmq_app_id",
-		Usage: "The value of the AppId field to set on all publisher RabbitMQ messages.",
-		Value: &RabbitMQAppID,
-	}
 )
 
 // Application configuration variables.
@@ -151,13 +120,6 @@ var (
 
 	MaxPGIdleConn int
 	MaxPGOpenConn int
-
-	RabbitMQHost        string
-	RabbitMQUser        string
-	RabbitMQPassword    string
-	RabbitMQPort        int
-	RabbitMQVirtualHost string
-	RabbitMQAppID       string
 )
 
 // setDefault sets the default value of the flag to the given value iff
@@ -208,13 +170,6 @@ func init() {
 
 	setDefault(&MaxPGIdleConnFlag, 80)
 	setDefault(&MaxPGOpenConnFlag, 80)
-
-	setDefault(&RabbitMQHostFlag, "localhost")
-	setDefault(&RabbitMQUserFlag, "guest")
-	setDefault(&RabbitMQPasswordFlag, "guest")
-	setDefault(&RabbitMQPortFlag, 5672)
-	setDefault(&RabbitMQVirtualHostFlag, "tradetracker")
-	setDefault(&RabbitMQAppIDFlag, "tradetracker.local")
 }
 
 // RegisterCommandFlags registers the given flags with cobra.
