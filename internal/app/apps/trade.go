@@ -60,7 +60,7 @@ func (app *TradeApp) Run(ctx context.Context, args []string) error {
 		if err != nil {
 			return errors.Wrap(err, "parse instrument ID failed")
 		}
-		instrumentIDs[i] = instrumentID
+		instrumentIDs[i-1] = instrumentID
 	}
 	// set up the repository to interact with trades and positions in the database
 	r, err := repo.NewRepo(repo.WithDB(app.DB))
