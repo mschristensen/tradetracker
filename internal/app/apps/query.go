@@ -57,7 +57,7 @@ func (app *QueryApp) Run(ctx context.Context, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "new repo failed")
 	}
-	pos, err := r.ReadPosition(ctx, int64(instrumentID), timestamp)
+	pos, err := r.ReadPosition(ctx, instrumentID, timestamp)
 	if err != nil {
 		return errors.Wrap(err, "read position failed")
 	}
